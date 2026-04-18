@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+env/
+
+# Streamlit
+.streamlit/
+
+# Project Specific
+hospital_code.txt
+*.pdf
+*.docx
+chroma_db/
+.env
