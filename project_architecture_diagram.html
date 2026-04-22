@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Architecture - Current State & Future MEP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-primary: #2563eb;
+            --blue-bg: #eff6ff;
+            --blue-border: #bfdbfe;
+            
+            --green-primary: #16a34a;
+            --green-bg: #f0fdf4;
+            --green-border: #bbf7d0;
+            
+            --purple-primary: #9333ea;
+            --purple-bg: #faf5ff;
+            --purple-border: #f3e8ff;
+            
+            --yellow-primary: #ca8a04;
+            --yellow-bg: #fefce8;
+            --yellow-border: #fef08a;
+            
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-page: #f8fafc;
+            --border-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        .diagram-container {
+            width: 100%;
+            max-width: 1300px;
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+            position: relative;
+        }
+
+        .section {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .section-title {
+            position: absolute;
+            top: -15px;
+            left: 30px;
+            background: white;
+            padding: 0 15px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .section-current .section-title { color: var(--blue-primary); }
+        .section-future .section-title { color: var(--purple-primary); }
+
+        /* Flow Layout */
+        .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .node {
+            padding: 20px;
+            border-radius: 16px;
+            border-width: 2px;
+            border-style: solid;
+            width: 180px;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .node-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .node-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        /* Color Coding */
+        .blue { background-color: var(--blue-bg); border-color: var(--blue-border); color: var(--blue-primary); }
+        .green { background-color: var(--green-bg); border-color: var(--green-border); color: var(--green-primary); }
+        .purple { background-color: var(--purple-bg); border-color: var(--purple-border); color: var(--purple-primary); }
+        .yellow { background-color: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-primary); }
+
+        /* Arrows */
+        .arrow {
+            color: var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            min-width: 30px;
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '→';
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Branching Layout for Future MEP */
+        .branch-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .branch-path {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .vertical-arrow {
+            width: 2px;
+            height: 30px;
+            background-color: var(--border-light);
+            position: relative;
+        }
+
+        .vertical-arrow::after {
+            content: '↓';
+            position: absolute;
+            bottom: -15px;
+            left: -6px;
+            font-size: 1.2rem;
+            color: var(--border-light);
+        }
+
+        /* Special Nodes */
+        .input-node { border-style: dashed; }
+        .output-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .output-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--green-bg);
+            border: 1px solid var(--green-border);
+            color: var(--green-primary);
+            text-align: center;
+        }
+
+        /* Tooltip-like popup */
+        .node:hover .node-desc {
+            color: var(--text-main);
+        }
+
+        /* Connection between sections */
+        .bridge {
+            position: absolute;
+            left: 50%;
+            top: 330px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 1;
+        }
+
+        .bridge-line {
+            width: 2px;
+            height: 60px;
+            background: linear-gradient(to bottom, var(--blue-primary), var(--purple-primary));
+        }
+
+        .bridge-tag {
+            background: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--purple-primary);
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 1100px) {
+            .flow-row { justify-content: center; }
+            .arrow { display: none; }
+            .node { margin: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>System Architecture Roadmap</h1>
+    <p class="subtitle">From Structural Point Cloud Processing to Intelligent MEP Reconstruction</p>
+
+    <div class="diagram-container">
+        
+        <!-- SECTION 1: CURRENT PIPELINE -->
+        <div class="section section-current">
+            <div class="section-title">Section 1: Current Implemented Pipeline</div>
+            <div class="flow-row">
+                
+                <!-- Input -->
+                <div class="node blue input-node">
+                    <div class="node-icon">📄</div>
+                    <div class="node-title">Input Data</div>
+                    <div class="node-desc">ASCII .xyz Point Cloud (Raw Scan)</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 1 -->
+                <div class="node blue">
+                    <div class="node-icon">📥</div>
+                    <div class="node-title">1. Read Cloud</div>
+                    <div class="node-desc">Streaming ingestion into memory</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 2 -->
+                <div class="node blue">
+                    <div class="node-icon">📉</div>
+                    <div class="node-title">2. Density Reduction</div>
+                    <div class="node-desc">Voxel/Hybrid filtering & noise removal</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 3 -->
+                <div class="node blue">
+                    <div class="node-icon">📐</div>
+                    <div class="node-title">3. Normal Est.</div>
+                    <div class="node-desc">KD-Tree based spatial indexing</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 4 -->
+                <div class="node blue">
+                    <div class="node-icon">🧩</div>
+                    <div class="node-title">4. Region Growing</div>
+                    <div class="node-desc">Surface-based geometric segmentation</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 5 -->
+                <div class="node blue">
+                    <div class="node-icon">📊</div>
+                    <div class="node-title">5. PCA Extraction</div>
+                    <div class="node-desc">Linearity, Planarity, Sphericity features</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Stage 6 (Optional) -->
+                <div class="node yellow">
+                    <div class="node-icon">🧠</div>
+                    <div class="node-title">6. Classification</div>
+                    <div class="node-desc">Optional segment tagging (Experimental)</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Outputs -->
+                <div class="output-group">
+                    <div class="output-pill">Segmented .xyz</div>
+                    <div class="output-pill">Features .csv</div>
+                    <div class="output-pill">JSON Summary</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Integration -->
+                <div class="node green">
+                    <div class="node-icon">🏗️</div>
+                    <div class="node-title">Revit Integration</div>
+                    <div class="node-desc">MCP creates walls/floors geometry</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BRIDGE -->
+        <div class="bridge">
+            <div class="bridge-line"></div>
+            <div class="bridge-tag">Successful Structural Foundation</div>
+            <div class="bridge-line"></div>
+        </div>
+
+        <!-- SECTION 2: FUTURE MEP WORKFLOW -->
+        <div class="section section-future">
+            <div class="section-title">Section 2: Future MEP Extension</div>
+            
+            <div class="flow-row" style="justify-content: center; gap: 60px;">
+                
+                <!-- MEP Step 1 -->
+                <div class="node purple">
+                    <div class="node-icon">🔍</div>
+                    <div class="node-title">Semantic Detection</div>
+                    <div class="node-desc">Identify Pipes, Ducts, Valves, Tanks</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- MEP Step 2 -->
+                <div class="node purple">
+                    <div class="node-icon">⭕</div>
+                    <div class="node-title">Geometric Fitting</div>
+                    <div class="node-desc">Convert to Cylinders & Boxes</div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- MEP Step 3 -->
+                <div class="node purple">
+                    <div class="node-icon">🔄</div>
+                    <div class="node-title">Auto-Replacement</div>
+                    <div class="node-desc">Map to native BIM Families</div>
+                </div>
+
+            </div>
+
+            <div style="margin-top: 40px; text-align: center; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">
+                ADVANCED AI APPROACHES (Parallel Development)
+            </div>
+
+            <div class="branch-container">
+                
+                <div class="branch-path">
+                    <div class="vertical-arrow"></div>
+                    <div class="node yellow">
+                        <div class="node-icon">🤖</div>
+                        <div class="node-title">Machine Learning</div>
+                        <div class="node-desc">PCA + Random Forest / XGBoost</div>
+                    </div>
+                </div>
+
+                <div class="branch-path">
+                    <div class="vertical-arrow"></div>
+                    <div class="node yellow">
+                        <div class="node-icon">📚</div>
+                        <div class="node-title">RAG + KG</div>
+                        <div class="node-desc">Rule-based Reasoning Agent</div>
+                    </div>
+                </div>
+
+                <div class="branch-path">
+                    <div class="vertical-arrow"></div>
+                    <div class="node yellow">
+                        <div class="node-icon">🎯</div>
+                        <div class="node-title">YOLO + SAM</div>
+                        <div class="node-desc">Vision-based Object Recognition</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simple interactivity: highlight path on hover
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                node.style.borderColor = getComputedStyle(node).getPropertyValue('color');
+            });
+            node.addEventListener('mouseleave', () => {
+                node.style.borderColor = '';
+            });
+            node.addEventListener('click', () => {
+                alert(`Stage: ${node.querySelector('.node-title').innerText}\n\n${node.querySelector('.node-desc').innerText}`);
+            });
+        });
+    </script>
+</body>
+</html>
